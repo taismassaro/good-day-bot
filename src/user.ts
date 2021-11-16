@@ -5,26 +5,26 @@ import { User } from './types';
 
 export const saveUser = async (config: User) => {
   // eslint-disable-next-line camelcase
-  const { slackid, ghuser, ghrepo, prompt_time, is_unsubscribed } = config;
+  const { slackId, ghuser, ghrepo, prompt_time, is_unsubscribed } = config;
 
-  if (!slackid) {
+  if (!slackId) {
     return;
   }
 
-  const findUserSql = `SELECT * FROM users where slackid='${slackid}' LIMIT 1`;
+  const findUserSql = `SELECT * FROM users where slackId='${slackId}' LIMIT 1`;
 
   const { rows: users } = await pool.query(findUserSql);
   const user = users[0];
 
   if (!user) {
-    const createUserSql = `INSERT INTO USERS (slackid) VALUES ('${slackid}')`;
+    const createUserSql = `INSERT INTO USERS (slackId) VALUES ('${slackId}')`;
 
     await pool.query(createUserSql);
   }
 
   const userDataRes = await slaxios.get('users.info', {
     params: {
-      user: slackid,
+      user: slackId,
       include_locale: true,
     },
   });
@@ -40,7 +40,7 @@ export const saveUser = async (config: User) => {
   // only updates records that are not undefined
   const keys = Object.keys(metrics).filter((key) => (metrics as any)[key as string] !== undefined);
   const valuesString = keys.map((key) => `${key}='${(metrics as any)[key]}'`).join(', ');
-  const updateUserSql = `UPDATE USERS SET ${valuesString} WHERE slackid='${slackid}'`;
+  const updateUserSql = `UPDATE USERS SET ${valuesString} WHERE slackId='${slackId}'`;
 
   await pool.query(updateUserSql);
 };
@@ -50,7 +50,7 @@ export const getUser = async (slackUserId: string): Promise<User> => {
     return null;
   }
 
-  const findUserSql = `SELECT * FROM users where slackid='${slackUserId}' LIMIT 1`;
+  const findUserSql = `SELECT * FROM users where slackId='${slackUserId}' LIMIT 1`;
 
   const { rows: users } = await pool.query(findUserSql);
 
@@ -61,16 +61,16 @@ export const getUser = async (slackUserId: string): Promise<User> => {
 
   const user: User = users[0];
 
-  const channelid = await getChannelId(user.slackid);
-  user.channelid = channelid;
+  const channelId = await getChannelId(user.slackId);
+  user.channelId = channelId;
 
   return user;
 };
 
-export const isRepoUnique = async (slackid: string, ghuser: string, ghrepo: string) => {
-  const isUnique = `SELECT * FROM users where ghrepo='${ghrepo}' and ghuser='${ghuser}'`;
+export const isRepoUnique = async (slackId: string, ghuser: string, ghrepo: string) => {
+  const isUniqueSql = `SELECT * FROM users where ghrepo='${ghrepo}' and ghuser='${ghuser}'`;
 
-  const { rows: users } = await pool.query(isUnique);
+  const { rows: users } = await pool.query(isUniqueSql);
 
   // if no other repo in the db, then unique repo
   if (users.length === 0) {
@@ -78,7 +78,7 @@ export const isRepoUnique = async (slackid: string, ghuser: string, ghrepo: stri
   }
 
   // if user adds their own repo, then it's already theirs
-  if (users[0].slackid === slackid) {
+  if (users[0].slackId === slackId) {
     return true;
   }
   return false;

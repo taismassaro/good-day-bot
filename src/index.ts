@@ -1,6 +1,5 @@
 import 'dotenv/config';
 import express, { Request, Response } from 'express';
-import cors from 'cors';
 import { createEventAdapter } from '@slack/events-api';
 import { createMessageAdapter } from '@slack/interactive-messages';
 import { Block, HeaderBlock } from '@slack/types';
@@ -9,7 +8,6 @@ import { getHomeBlocks, updateHome, Debug } from './slack-home';
 import { getUser, isRepoUnique, saveUser } from './user';
 import { notifyUserOfSummary } from './chart';
 import { track } from './analytics';
-
 import {
   parseSlackResponse,
   getChannelId,
@@ -47,7 +45,9 @@ slackEvents.on('app_home_opened', async (event) => {
   // user exists
   if (user) {
     // there are two cases - if a user exists but hasn't saved a valid repo and if a user exists and has saved a valid repo
-    const blocks = user.ghrepo ? await getHomeBlocks(user, Debug.setupComplete) : await getHomeBlocks(user, Debug.noDebug);
+    const blocks = user.ghrepo
+      ? await getHomeBlocks(user, Debug.setupComplete)
+      : await getHomeBlocks(user, Debug.noDebug);
     await updateHome(slackUserId, blocks);
 
     track({ event: 'app_home_opened' });
@@ -55,7 +55,7 @@ slackEvents.on('app_home_opened', async (event) => {
     // first time user opening the app
     const defaultUser = {
       prompt_time: '17:00',
-      slackid: slackUserId,
+      slackId: slackUserId,
       is_unsubscribed: false,
     };
 
@@ -90,36 +90,31 @@ const showHomeBlock = async (isBotSetUp: boolean, slackUserId: string, owner: st
     // if repo is unique then we can save the repo info in the DB
     if (isUnique) {
       await saveUser({
-        slackid: slackUserId,
+        slackId: slackUserId,
         ghuser: owner,
         ghrepo: name,
       });
       const user: User = await getUser(slackUserId); // fetch the newly saved user
       newBlocks = await getHomeBlocks(user, Debug.setupComplete);
 
-      // check if repo successful
-      if (isBotSetUp) {
-        track({ event: 'onboarding-github-repo-success' });
-      }
-    } else { // if repo is NOT unique, show debug message around claiming a unique repo
+      track({ event: 'onboarding-github-repo-success' });
+    } else {
+      // if repo is NOT unique, show debug message around claiming a unique repo
       const user: User = await getUser(slackUserId);
       user.ghuser = owner;
       user.ghrepo = name;
       newBlocks = await getHomeBlocks(user, Debug.repoClaimed);
 
-      if (isBotSetUp) {
-        track({ event: 'onboarding-github-repo-collision' });
-      }
+      track({ event: 'onboarding-github-repo-collision' });
     }
-  } else { // if bot is not setup show debug info for inviting the bot
+  } else {
+    // if bot is not setup show debug info for inviting the bot
     const user: User = await getUser(slackUserId);
     user.ghuser = owner;
     user.ghrepo = name;
     newBlocks = await getHomeBlocks(user, Debug.inviteBot);
 
-    if (isBotSetUp) {
-      track({ event: 'onboarding-github-repo-no-bot-invite' });
-    }
+    track({ event: 'onboarding-github-repo-no-bot-invite' });
   }
 
   await updateHome(slackUserId, newBlocks);
@@ -129,6 +124,7 @@ slackInteractions.action({ actionId: 'onboarding-github-repo' }, async (payload)
   const repo = payload.actions[0].value;
   const wholeRepoString = repo.split('github.com/')[1] || '';
   const [owner, name] = wholeRepoString.split('/');
+
   if (!owner || !name) {
     const slackUserId = payload.user.id;
     const user: User = await getUser(slackUserId);
@@ -167,7 +163,8 @@ slackInteractions.action({ actionId: 'onboarding-timepicker-action' }, async (pa
   const newPromptTime = payload.actions[0].selected_time;
 
   await saveUser({
-    slackid: slackUserId,
+    ...user,
+    slackId: slackUserId,
     prompt_time: newPromptTime,
   });
   user = await getUser(slackUserId);
@@ -180,7 +177,7 @@ slackInteractions.action({ actionId: 'onboarding-timepicker-action' }, async (pa
 
 slackInteractions.action({ actionId: 'trigger-prompt' }, async (payload) => {
   const user = await getUserFromPayload(payload);
-  await messageUserQuestionsForm(user.channelid);
+  await messageUserQuestionsForm(user.channelId);
 });
 
 slackInteractions.action({ actionId: 'trigger-report' }, async (payload) => {
@@ -199,12 +196,12 @@ slackInteractions.action({ actionId: 'check-report' }, async () => {
 slackInteractions.action({ actionId: 'resubscribe' }, async (payload) => {
   let user = await getUserFromPayload(payload);
   await saveUser({
-    slackid: user.slackid,
+    slackId: user.slackId,
     is_unsubscribed: false,
   });
   user = await getUserFromPayload(payload);
   const newBlocks = await getHomeBlocks(user);
-  await updateHome(user.slackid, newBlocks);
+  await updateHome(user.slackId, newBlocks);
 
   track({ event: 'resubscribe' });
 });
@@ -212,12 +209,13 @@ slackInteractions.action({ actionId: 'resubscribe' }, async (payload) => {
 slackInteractions.action({ actionId: 'unsubscribe' }, async (payload) => {
   let user = await getUserFromPayload(payload);
   await saveUser({
-    slackid: user.slackid,
+    ...user,
+    slackId: user.slackId,
     is_unsubscribed: true,
   });
   user = await getUserFromPayload(payload);
   const newBlocks = await getHomeBlocks(user);
-  await updateHome(user.slackid, newBlocks);
+  await updateHome(user.slackId, newBlocks);
 
   track({ event: 'unsubscribe' });
 });
@@ -265,7 +263,7 @@ const checkAuthenticationHeaders = (authorizationString: string) => {
   return true;
 };
 
-app.get('/', async (req: Request, res: Response) => {
+app.get('/', async (_req: Request, res: Response) => {
   res.send('beep boop beep boop');
 });
 

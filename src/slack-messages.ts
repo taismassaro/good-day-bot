@@ -32,9 +32,9 @@ export const messageUser = async (channel: string, blocks: (KnownBlock | Block)[
 };
 
 export const messageUserImage = async (imagePath: string, imageName: string, imageTitle: string, user: User) => {
-  const channelId = await getChannelId(user.slackid);
+  const channelId = await getChannelId(user.slackId);
   if (!channelId) {
-    console.log('Channel not found for user ', user.slackid);
+    console.log('Channel not found for user ', user.slackId);
     return;
   }
 
@@ -71,7 +71,7 @@ const getTimeChangeBlock = (time: string) => {
 };
 
 export const messageUserTimeChange = async (user: User, time: string) => {
-  const channelId = await getChannelId(user.slackid);
+  const channelId = await getChannelId(user.slackId);
 
   await messageUser(channelId, getTimeChangeBlock(time));
 };
@@ -268,7 +268,7 @@ export const parseSlackResponse = (date: string, state: any) => {
 };
 
 const formSuccessfulMessages = [
-  'You\'re set for today!',
+  "You're set for today!",
   'Saved!',
   'Thanks for doing that.',
   'Your Good Day form has been saved.',
@@ -314,7 +314,7 @@ export const messageUserQuestionsForm = async (channelId: string) => {
 };
 
 export const messageUserFormSuccessful = async (user: User) => {
-  const channelId = await getChannelId(user.slackid);
+  const channelId = await getChannelId(user.slackId);
 
   await messageUser(channelId, getFormSuccessfulBlock());
 };

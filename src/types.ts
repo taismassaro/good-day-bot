@@ -9,8 +9,8 @@ export type FormResponse = Record<FormResponseField | 'date', string>;
 export type User = {
   ghrepo?: string;
   ghuser?: string;
-  slackid: string;
-  channelid?: string;
+  slackId: string;
+  channelId?: string;
   timezone?: string;
   // eslint-disable-next-line camelcase
   prompt_time?: string;

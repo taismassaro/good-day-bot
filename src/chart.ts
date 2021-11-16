@@ -34,7 +34,7 @@ export const notifyUserOfSummary = async (user: User) => {
     },
   ];
 
-  const channelId = await getChannelId(user.slackid);
+  const channelId = await getChannelId(user.slackId);
 
   await slaxios.post('chat.postMessage', {
     channel: channelId,

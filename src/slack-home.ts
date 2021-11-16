@@ -8,7 +8,7 @@ export enum Debug {
   inviteBot = 'invite', // debug message to invite bot
   repoClaimed = 'claimed', // repo was already claimed by someone else
   setupComplete = 'complete', // repo setup successful
-  invalidRepo = 'invalid' // repo is invalid
+  invalidRepo = 'invalid', // repo is invalid
 }
 
 const padding = {
@@ -21,8 +21,8 @@ const padding = {
 };
 
 export const getHomeBlocks = async (user: User, debug?: Debug) => {
-  const repo = (user.ghuser && user.ghrepo) ? `${user.ghuser}/${user.ghrepo}` : '';
-  const repoUrl = (user.ghuser && user.ghrepo) ? `https://github.com/${user.ghuser}/${user.ghrepo}` : '';
+  const repo = user.ghuser && user.ghrepo ? `${user.ghuser}/${user.ghrepo}` : '';
+  const repoUrl = user.ghuser && user.ghrepo ? `https://github.com/${user.ghuser}/${user.ghrepo}` : '';
 
   const isUnsubscribed = user.is_unsubscribed;
 
@@ -31,7 +31,12 @@ export const getHomeBlocks = async (user: User, debug?: Debug) => {
   const friendlyPromptTime = +hour === 12 ? '12:00 PM' : `${+hour % 12}:00 ${+hour >= 12 ? 'PM' : 'AM'}`;
 
   // repo is only truly setup when Debug is setupComplete
-  const isSetUp = !((debug === Debug.repoClaimed || debug === Debug.inviteBot || debug === Debug.noDebug || debug === Debug.invalidRepo));
+  const isSetUp = !(
+    debug === Debug.repoClaimed ||
+    debug === Debug.inviteBot ||
+    debug === Debug.noDebug ||
+    debug === Debug.invalidRepo
+  );
 
   const showDebug = (() => {
     switch (debug) {
@@ -96,7 +101,8 @@ export const getHomeBlocks = async (user: User, debug?: Debug) => {
             type: 'section',
             text: {
               type: 'mrkdwn',
-              text: 'There\'s something wrong with your repo URL. Try adding it in this format https://github.com/username/repo',
+              text:
+                "There's something wrong with your repo URL. Try adding it in this format https://github.com/username/repo",
             },
           },
         ];
@@ -210,8 +216,7 @@ We left the set-up instructions below, in case you want to change your GitHub re
           type: 'header',
           text: {
             type: 'plain_text',
-            // eslint-disable-next-line quotes
-            text: `You're all set, but you have paused messages for now.`,
+            text: "You're all set, but you have paused messages for now.",
             emoji: true,
           },
         },
